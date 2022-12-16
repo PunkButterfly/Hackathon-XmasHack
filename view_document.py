@@ -12,7 +12,7 @@ def process_input(text):
     return result
 
 
-def view_document(document_text, ids, color="#1C6758"):
+def view_document(document_text, ids, color="#630606"):
     processed_text = process_input(document_text)
     text_splitted = re.split(r"(\d+[0-9\.]*\.\s)", processed_text)
 

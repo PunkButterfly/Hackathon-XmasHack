@@ -202,6 +202,12 @@ def run_inference(new_document_text, device, model=model, sentence_length=5):
 
     # return most common labels Counter
     most_confident_labels = choose(predicted_labels)  # [(2, 52), (4, 9), (0, 8), (3, 5)]
+    ########
+    probabilities = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
+    for label in probabilities.keys():
+        #probabilities[label] = dict(most_confident_labels[1])[label]
+        probabilities[label] = most_confident_labels[1][label] / sum(most_confident_labels[1].values())
+    ########
     most_confident_label = most_confident_labels[0]
     print(f"labels:{most_confident_labels}")
     print(f"Most confident label is {most_confident_label}")
@@ -212,4 +218,4 @@ def run_inference(new_document_text, device, model=model, sentence_length=5):
     beam_size = 10
     best_sentences_ids = np.argpartition(best_sequences[:, 2], -beam_size)[-beam_size:][::-1]
 
-    return most_confident_label, most_confident_labels, best_sentences_ids, filtered_splitting_points, processed_splitted_text, final_logits
+    return most_confident_label, most_confident_labels, best_sentences_ids, probabilities
