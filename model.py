@@ -6,40 +6,40 @@ from torch.optim import AdamW
 
 class BertForSequenceClassification(nn.Module):
     def __init__(
-        self, 
-        pretrained_model_name : str,
-        num_labels : int,
-        dropout : float = 0.25
+            self,
+            pretrained_model_name: str,
+            num_labels: int,
+            dropout: float = 0.25
     ):
         super().__init__()
-        
+
         # Form the model configuration from passed pretrained_model_name and num_labels
         config = AutoConfig.from_pretrained(
-            pretrained_model_name, 
+            pretrained_model_name,
             num_labels=num_labels
         )
-       
+
         self.model = AutoModel.from_pretrained(
-            pretrained_model_name, 
+            pretrained_model_name,
             config=config
         )
         self.num_labels = num_labels
         self.pre_classifier = nn.Linear(config.hidden_size, config.hidden_size)
         self.dropout = nn.Dropout(dropout)
-        self.classifier = nn.Linear(config.hidden_size, config.num_labels)  
-    
+        self.classifier = nn.Linear(config.hidden_size, config.num_labels)
+
     def forward(self, input_ids, attention_mask=None, head_mask=None, labels=None, return_dict=False):
         """
         Compute class probabilities for the input sequence
             Args:
                 features - torch DataLoader containing 
         """
-        
+
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
         outputs = self.model(
-            input_ids=input_ids, 
-            attention_mask=attention_mask, 
+            input_ids=input_ids,
+            attention_mask=attention_mask,
             head_mask=head_mask,
             return_dict=return_dict,
         )
@@ -65,7 +65,7 @@ class BertForSequenceClassification(nn.Module):
         if not return_dict:
             output = (logits,) + outputs[2:]
             return ((loss,) + output) if loss is not None else output
-        
+
         return SequenceClassifierOutput(
             loss=loss,
             logits=logits,

@@ -9,7 +9,6 @@ from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModel
 from model import BertForSequenceClassification
 
-
 torch.manual_seed(42)
 
 
@@ -89,8 +88,8 @@ def process_text(text):
     """
     Очищает текст
     """
-    text = re.sub("_+", "", text) # Удаляет подчеркивания
-    text = re.sub("\([^)]*\)", "", text) # Удаляет фразы в скобках (Фамилия имя отчество)
+    text = re.sub("_+", "", text)  # Удаляет подчеркивания
+    text = re.sub("\([^)]*\)", "", text)  # Удаляет фразы в скобках (Фамилия имя отчество)
     # text = re.sub("\([^)]*\)", "", text) # Удаляет фразы в квадратных скобках (Пока не работает)
     text = text.lower()
     # text = re.sub(r'[^\w\s]','', text)
@@ -108,7 +107,8 @@ def process_splitted_text(sequences):
     return result
 
 
-def splitting_text_by_regex(text, splitter="\d+[0-9\.]*\.\s"):  # \d+\.[0-9\.]* - старый вариант (резал по отсылкам на пункты) #   \n\d+[0-9\.]*
+def splitting_text_by_regex(text,
+                            splitter="\d+[0-9\.]*\.\s"):  # \d+\.[0-9\.]* - старый вариант (резал по отсылкам на пункты) #   \n\d+[0-9\.]*
     """
     Стандартный regex сплитит по пунктам договора
     """
@@ -140,12 +140,13 @@ with open("config.yml", "r") as yamlfile:
 
 model = BertForSequenceClassification(
     pretrained_model_name='DeepPavlov/rubert-base-cased',
-    num_labels=cfg['model']['num_classes'], # 5
-    dropout=cfg['model']['dropout'], # 0.25
+    num_labels=cfg['model']['num_classes'],  # 5
+    dropout=cfg['model']['dropout'],  # 0.25
 )
 model.load_state_dict(torch.load("DeepPavlov-Ru-bert-fine-tuned.pt", map_location=torch.device('cpu')))
 
-def run_inference(new_document_text, device, model=model):
+
+def run_inference(new_document_text, device, model=model, sentence_length=5):
     # Препроцесс
     splitted_text, splitting_points = splitting_text_by_regex(process_text(new_document_text))
     processed_splitted_text = process_splitted_text(splitted_text)
@@ -159,7 +160,7 @@ def run_inference(new_document_text, device, model=model):
     #         filtered_splitted_texts.append(text)
     #         filtered_splitting_points.append(splitter)
     for text, splitter in zip(processed_splitted_text, splitting_points):
-        if len(text.split(" ")) > 5:
+        if len(text.split(" ")) > sentence_length:
             filtered_splitted_texts.append(text)
             filtered_splitting_points.append(splitter)
 
