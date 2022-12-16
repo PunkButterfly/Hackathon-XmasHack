@@ -1,0 +1,22 @@
+data:
+  labeled_df_filename: /content/dataset/train.tsv
+  unlabeled_df_filename: /content/dataset/test.tsv
+  train_size: 0.8
+  val_size: 0.2
+
+model:
+  model_name: DeepPavlov/rubert-base-cased
+  max_seq_length: 128                   
+  num_classes: 5
+  dropout: 0.25
+
+training:
+  learning_rate: 3e-5                  
+  adam_epsilon: 1e-8                   
+  num_epochs: 3                         
+  batch_size: 16                         
+
+general:
+  seed: 42                            
+  
+  

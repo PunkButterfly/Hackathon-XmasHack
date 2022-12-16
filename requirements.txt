@@ -1,0 +1,10 @@
+streamlit==1.13.0
+bs4==0.0.1
+beautifulsoup4==4.11.1
+numpy==1.23.3
+PyYAML==6.0
+transformers==4.25.1
+sklearn==0.0
+scikit-learn==1.1.2
+torch==1.13.1
+tqdm==4.64.1
