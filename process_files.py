@@ -42,7 +42,8 @@ def read_docx_file(docx_file_path: str) -> str:
         full_doc_text = ''
         for para in all_paras:
             full_doc_text = full_doc_text + '\n' + para.text
-        return full_doc_text.replace('Evaluation Only. Created with Aspose.Words. Copyright 2003-2022 Aspose Pty Ltd.', '')
+        return full_doc_text.replace('Evaluation Only. Created with Aspose.Words. Copyright 2003-2022 Aspose Pty Ltd.',
+                                     '')
     except:
         print(f'Ошибка: Не удалось открыть файл: {docx_file_path}\n {traceback.format_exc()}')
         return None
@@ -80,11 +81,3 @@ def convert_file_to_text(document_file):
         document_content = read_docx_file("files/file.docx")
 
     return document_content
-
-def process_input(text):
-    result = re.sub(r"\<[\s\S]*?\>", "", text)
-    result = re.sub(r"\n*\n", "\n", result)
-    result = re.sub(r"\_*\_", "___", result)
-    result = re.sub(r"\n\_*", "\n", result)
-
-    return result

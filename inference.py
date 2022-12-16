@@ -164,9 +164,6 @@ def run_inference(new_document_text, device, model=model, sentence_length=5):
             filtered_splitted_texts.append(text)
             filtered_splitting_points.append(splitter)
 
-    print(len(filtered_splitted_texts))
-    print(len(filtered_splitting_points))
-
     # Образуем unlabeled_dataloader
     unlabeled_dataset = TextClassificationDataset(
         texts=filtered_splitted_texts,
