@@ -10,3 +10,4 @@ docx==0.2.4
 # dill нужно скачать
 pypdf2==2.12.1
 requests==2.28.1
+gdown==4.6.0

@@ -4,6 +4,7 @@ from utils import get_confidence_sentences_ids
 from view_document import view_document
 from process_files import convert_file_to_text
 from annotated_text import annotated_text
+from ml_model.download_model import download_model
 
 colors = ["#1C6758", "#25316D", "#4C0033", "#4C3A51", "#630606"]
 reversed_mapping = {
@@ -14,6 +15,9 @@ reversed_mapping = {
     4: "Договоры поставки"
 }
 st.set_page_config(layout="wide")
+
+download_model()
+
 # Initializing cache
 document_content = None
 output = None
@@ -44,6 +48,7 @@ if analyze_button:
         document_content = document_text
     elif document_file:
         document_content = convert_file_to_text(document_file)
+
     st.session_state.document_content = document_content
 
     output = run_inference(document_content, device='cpu')
