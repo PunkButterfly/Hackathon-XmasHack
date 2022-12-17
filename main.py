@@ -18,12 +18,6 @@ st.set_page_config(layout="wide")
 
 model = download_model()
 
-# Initializing cache
-document_content = None
-output = None
-if 'output' not in st.session_state:
-    st.session_state.output = output
-
 st.title("Классификатор документов онлайн")
 
 inputing_text_column, inputing_file_column = st.columns(2, gap="large")
@@ -39,106 +33,115 @@ with inputing_file_column:
     document_file = st.file_uploader("", type=["doc", "docx", "pdf", "rtf"])
 
 analyze_button = st.button("Анализ", key="predict")
-if "analyze_button_state" not in st.session_state:
-    st.session_state.analyze_button_state = False
+
+if 'output' not in st.session_state:
+    st.session_state['output'] = False
 
 if analyze_button:
 
     if document_text:
         document_content = document_text
+
+        st.session_state.document_content = document_content
+
+        output = run_inference(document_content, device='cpu', model=model)
+        st.session_state.output = output
     elif document_file:
         document_content = convert_file_to_text(document_file)
 
-    st.session_state.document_content = document_content
+        st.session_state.document_content = document_content
 
-    output = run_inference(document_content, device='cpu', model=model)
-    st.session_state.output = output
+        output = run_inference(document_content, device='cpu', model=model)
+        st.session_state.output = output
 
 st.write("___")
 st.write(" ")
 viewing_column, controlling_column = st.columns(2, gap="large")
 
-output = st.session_state.output
-with controlling_column:
-    st.subheader("Настройки анализа")
+try:
+    if not st.session_state.output:
+        raise ValueError
 
-    confidence_filter = st.slider("Уровень доверия", min_value=0.1, max_value=0.9, step=0.1, value=0.8)
-    st.session_state.confidence_filter = confidence_filter
+    output = st.session_state.output
 
-    st.write("")
-    class_id = 0
-    annotated_text(
-        (
-            f"{reversed_mapping[list(output[3].items())[class_id][0]]} - {int(list(output[3].items())[class_id][1] * 100)}%",
-            "", colors[class_id])
-    )
-    view_first_class = st.button("Выделить", key=f"view_first")
+    with controlling_column:
+        st.subheader("Настройки анализа")
 
-    st.write("")
-    class_id = 1
-    annotated_text(
-        (
-            f"{reversed_mapping[list(output[3].items())[class_id][0]]} - {int(list(output[3].items())[class_id][1] * 100)}%",
-            "", colors[class_id])
-    )
-    view_second_class = st.button("Выделить", key=f"view_second")
+        confidence_filter = st.slider("Уровень доверия", min_value=0.1, max_value=0.9, step=0.1, value=0.8)
+        st.session_state.confidence_filter = confidence_filter
 
-    st.write("")
-    class_id = 2
-    annotated_text(
-        (
-            f"{reversed_mapping[list(output[3].items())[class_id][0]]} - {int(list(output[3].items())[class_id][1] * 100)}%",
-            "", colors[class_id])
-    )
-    view_third_class = st.button("Выделить", key=f"view_third")
+        st.write("")
+        class_id = 0
+        annotated_text(
+            (
+                f"{reversed_mapping[list(output[3].items())[class_id][0]]} - {int(list(output[3].items())[class_id][1] * 100)}%",
+                "", colors[class_id])
+        )
+        view_first_class = st.button("Выделить", key=f"view_first")
 
-    st.write("")
-    class_id = 3
-    annotated_text(
-        (
-            f"{reversed_mapping[list(output[3].items())[class_id][0]]} - {int(list(output[3].items())[class_id][1] * 100)}%",
-            "", colors[class_id])
-    )
-    view_fourth_class = st.button("Выделить", key=f"view_fourth")
+        st.write("")
+        class_id = 1
+        annotated_text(
+            (
+                f"{reversed_mapping[list(output[3].items())[class_id][0]]} - {int(list(output[3].items())[class_id][1] * 100)}%",
+                "", colors[class_id])
+        )
+        view_second_class = st.button("Выделить", key=f"view_second")
 
-    st.write("")
-    class_id = 4
-    annotated_text(
-        (
-            f"{reversed_mapping[list(output[3].items())[class_id][0]]} - {int(list(output[3].items())[class_id][1] * 100)}%",
-            "", colors[class_id])
-    )
-    view_fifth_class = st.button("Выделить", key=f"view_fifth")
+        st.write("")
+        class_id = 2
+        annotated_text(
+            (
+                f"{reversed_mapping[list(output[3].items())[class_id][0]]} - {int(list(output[3].items())[class_id][1] * 100)}%",
+                "", colors[class_id])
+        )
+        view_third_class = st.button("Выделить", key=f"view_third")
 
-    entities = get_entities(document_text)
-    st.write(entities)
+        st.write("")
+        class_id = 3
+        annotated_text(
+            (
+                f"{reversed_mapping[list(output[3].items())[class_id][0]]} - {int(list(output[3].items())[class_id][1] * 100)}%",
+                "", colors[class_id])
+        )
+        view_fourth_class = st.button("Выделить", key=f"view_fourth")
 
-with viewing_column:
-    confidence_filter = st.session_state.confidence_filter
+        st.write("")
+        class_id = 4
+        annotated_text(
+            (
+                f"{reversed_mapping[list(output[3].items())[class_id][0]]} - {int(list(output[3].items())[class_id][1] * 100)}%",
+                "", colors[class_id])
+        )
+        view_fifth_class = st.button("Выделить", key=f"view_fifth")
 
-    st.subheader("Просмотр документа")
+        # entities = get_entities(st.session_state.document_content)
+        # st.write(entities)
 
-    if view_first_class:
-        view_document(st.session_state.document_content,
-                      get_confidence_sentences_ids(*output[2], quantile_param=confidence_filter)
-                      .get(0, np.array([])).tolist(), colors[0])
-    elif view_second_class:
-        view_document(st.session_state.document_content,
-                      get_confidence_sentences_ids(*output[2], quantile_param=confidence_filter)
-                      .get(1, np.array([])).tolist(), colors[1])
-    elif view_third_class:
-        view_document(st.session_state.document_content,
-                      get_confidence_sentences_ids(*output[2], quantile_param=confidence_filter)
-                      .get(2, np.array([])).tolist(), colors[2])
-    elif view_fourth_class:
-        view_document(st.session_state.document_content,
-                      get_confidence_sentences_ids(*output[2], quantile_param=confidence_filter)
-                      .get(3, np.array([])).tolist(), colors[3])
-    elif view_fifth_class:
-        view_document(st.session_state.document_content,
-                      get_confidence_sentences_ids(*output[2], quantile_param=confidence_filter)
-                      .get(4, np.array([])).tolist(), colors[4])
+    with viewing_column:
+        confidence_filter = st.session_state.confidence_filter
 
-'''
-streamlit run main.py
-'''
+        st.subheader("Просмотр документа")
+
+        if view_first_class:
+            view_document(st.session_state.document_content,
+                          get_confidence_sentences_ids(*output[2], quantile_param=confidence_filter)
+                          .get(0, np.array([])).tolist(), colors[0])
+        elif view_second_class:
+            view_document(st.session_state.document_content,
+                          get_confidence_sentences_ids(*output[2], quantile_param=confidence_filter)
+                          .get(1, np.array([])).tolist(), colors[1])
+        elif view_third_class:
+            view_document(st.session_state.document_content,
+                          get_confidence_sentences_ids(*output[2], quantile_param=confidence_filter)
+                          .get(2, np.array([])).tolist(), colors[2])
+        elif view_fourth_class:
+            view_document(st.session_state.document_content,
+                          get_confidence_sentences_ids(*output[2], quantile_param=confidence_filter)
+                          .get(3, np.array([])).tolist(), colors[3])
+        elif view_fifth_class:
+            view_document(st.session_state.document_content,
+                          get_confidence_sentences_ids(*output[2], quantile_param=confidence_filter)
+                          .get(4, np.array([])).tolist(), colors[4])
+except ValueError as err:
+    pass

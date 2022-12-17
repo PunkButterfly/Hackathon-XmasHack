@@ -64,7 +64,3 @@ def get_entities(text):
                 dic[word]['start_stop'].append((span.start, span.stop))
 
     return dic
-
-
-def get_amounts_ids(text):
-    pass

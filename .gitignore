@@ -3,3 +3,4 @@
 /.idea/
 DeepPavlov-Ru-bert-fine-tuned.pt
 
+/.env/
