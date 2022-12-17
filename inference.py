@@ -153,7 +153,7 @@ model = BertForSequenceClassification(
 model.load_state_dict(torch.load("DeepPavlov-Ru-bert-fine-tuned.pt", map_location=torch.device('cpu')))
 
 
-def run_inference(new_document_text, device, model=model, sentence_length=5):
+def run_inference(new_document_text, device, model=model, sentence_length=5, quantile_param=0.75):
     # Препроцесс
     splitted_text, splitting_points = splitting_text_by_regex(process_text(new_document_text))
     processed_splitted_text = process_splitted_text(splitted_text)
@@ -210,32 +210,32 @@ def run_inference(new_document_text, device, model=model, sentence_length=5):
     for label in probabilities.keys():
         # probabilities[label] = dict(most_confident_labels[1])[label]
         probabilities[label] = most_confident_labels[1][label] / sum(most_confident_labels[1].values())
-    ########
     most_confident_label = most_confident_labels[0]
     # Most confidence для каждого класса
-    most_dominant_sequences = {}
+    quantile_param = 0.75 # Параметр квантиля
 
+    most_dominant_sequences = {}
     beam_size = 10  # if there's less than 10 sequences => output all(<10) dominant sequences in this class
     for label in most_confident_labels[1]:
-        # print(np.argmax(flat_predictions, axis=1).flatten() == label)
-        # print(np.argmax(flat_predictions, axis=1).flatten())
 
-        # choose only those probs (43 for label = 0) (among all the 72 probs) which correspond to sequences with label == label
         fixed_label_probs = flat_predictions[np.where(predicted_labels == label)]
-        try:
-            dominant_indices = np.where(predicted_labels == label)[0][
-                np.argpartition(fixed_label_probs[:, label], -beam_size)[-beam_size:]]
-        except:
-            num_seq_by_class = most_confident_labels[1][label]
-            dominant_indices = np.where(predicted_labels == label)[0][
-                np.argpartition(fixed_label_probs[:, label], -num_seq_by_class)[-num_seq_by_class:]]
-        most_dominant_sequences[label] = dominant_indices
+        mean = np.quantile(fixed_label_probs[:, label], quantile_param)
+        dominant_ids = np.where(fixed_label_probs[:, label] > mean)
+        most_dominant_indices = np.where(predicted_labels == label)[0][dominant_ids]
 
-    # must be equal to number of sequences
-    # print(len(final_logits))  # equals to number of batches
-    # for i in range(len(final_logits)):
-    # best_sequences = flat_predictions[np.argmax(flat_predictions, axis=1).flatten() == most_confident_label]
-    # beam_size = 10
-    # best_sentences_ids = np.argpartition(best_sequences[:, most_confident_label], -beam_size)[-beam_size:][::-1]
+        most_dominant_sequences[label] = most_dominant_indices
+        print(most_dominant_indices)
+        # Работает
+        # # choose only those probs (43 for label = 0) (among all the 72 probs) which correspond to sequences with label == label
+        # fixed_label_probs = flat_predictions[np.where(predicted_labels == label)]
+        # try:
+        #     dominant_indices = np.where(predicted_labels == label)[0][
+        #         np.argpartition(fixed_label_probs[:, label], -beam_size)[-beam_size:]]
+        # except:
+        #     num_seq_by_class = most_confident_labels[1][label]
+        #     dominant_indices = np.where(predicted_labels == label)[0][
+        #         np.argpartition(fixed_label_probs[:, label], -num_seq_by_class)[-num_seq_by_class:]]
+        # most_dominant_sequences[label] = dominant_indices
+
 
     return most_confident_label, most_confident_labels, most_dominant_sequences, probabilities

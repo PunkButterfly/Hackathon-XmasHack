@@ -3,6 +3,7 @@ import streamlit as st
 from annotated_text import annotated_text
 from inference import splitting_text_by_regex, process_text, process_splitted_text
 
+
 def process_input(text):
     result = re.sub(r"\<[\s\S]*?\>", "", text)
     result = re.sub(r"\n[\s]*\n", "\n", result)
@@ -14,7 +15,8 @@ def process_input(text):
 
 
 def view_document(document_text, ids, color="#630606"):
-    splitted_text, splitting_points = splitting_text_by_regex(process_text(document_text, lower_flag=False), splitter='([\t\n]\s*\d+[0-9\.]*\.\s)')
+    splitted_text, splitting_points = splitting_text_by_regex(process_text(document_text, lower_flag=False),
+                                                              splitter='([\t\n]\s*\d+[0-9\.]*\.\s)')
     splitted_text = process_splitted_text(splitted_text)
     # text_splitted = re.split(r"([\t\n]\s*\d+[0-9\.]*\.\s)", document_text)  # (\d+[0-9\.]*\.\s)
 
