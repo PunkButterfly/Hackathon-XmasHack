@@ -84,14 +84,15 @@ class TextClassificationDataset(Dataset):
         return encoded_dict
 
 
-def process_text(text):
+def process_text(text, lower_flag=True):
     """
     Очищает текст
     """
     text = re.sub("_+", "", text)  # Удаляет подчеркивания
     text = re.sub("\([^)]*\)", "", text)  # Удаляет фразы в скобках (Фамилия имя отчество)
     # text = re.sub("\([^)]*\)", "", text) # Удаляет фразы в квадратных скобках (Пока не работает)
-    text = text.lower()
+    if lower_flag:
+        text = text.lower()
     # text = re.sub(r'[^\w\s]','', text)
 
     return text
@@ -102,21 +103,27 @@ def process_splitted_text(sequences):
     Очищает список пунктов договора
     """
     result = [re.sub("\n", "", x) for x in sequences]
-    result = [re.sub(r'\s+', ' ', x).strip() for x in sequences]
+    result = [re.sub(r'\s+', ' ', x).strip() for x in result]
 
     return result
 
 
-def splitting_text_by_regex(text,
-                            splitter="\d+[0-9\.]*\.\s"):  # \d+\.[0-9\.]* - старый вариант (резал по отсылкам на пункты) #   \n\d+[0-9\.]*
+def splitting_text_by_regex(text: str,
+                            splitter='[\t\n]\s*\d+[0-9\.]*\.\s'):
     """
-    Стандартный regex сплитит по пунктам договора
+        Стандартный regex сплитит по пунктам договора
     """
-    # TODO: Если не находит пункты, то пусть делит по абзацам
     points = re.findall(splitter, text)
     result = re.split(splitter, text)
+    splitted_text = []
+    for text in result:
+        if len(text.split(' ')) > 600:
+            # > 600 слов => разбиение по \n
+            splitted_text.extend(text.split('\n'))
+        else:
+            splitted_text.append(text)
 
-    return result, points
+    return splitted_text, points
 
 
 def choose(predictions, number_of_classes=5):
@@ -155,18 +162,14 @@ def run_inference(new_document_text, device, model=model, sentence_length=5):
     # Удаляем sequences длинны которых <= 5 (заголовки, которые одинаковые для многих документов)
     filtered_splitted_texts = []
     filtered_splitting_points = []
-    # for _, text, splitter in zip(processed_splitted_text, splitting_points):
-    #     if len(text.split(" ")) > 5:
+    # for text, splitter in zip(processed_splitted_text, splitting_points):
+    #     if len(text.split(" ")) > sentence_length:
     #         filtered_splitted_texts.append(text)
     #         filtered_splitting_points.append(splitter)
-    for text, splitter in zip(processed_splitted_text, splitting_points):
-        if len(text.split(" ")) > sentence_length:
-            filtered_splitted_texts.append(text)
-            filtered_splitting_points.append(splitter)
 
     # Образуем unlabeled_dataloader
     unlabeled_dataset = TextClassificationDataset(
-        texts=filtered_splitted_texts,
+        texts=processed_splitted_text,
         labels=None,
         max_seq_length=cfg['model']['max_seq_length'],
         model_name=cfg['model']['model_name'],
@@ -205,17 +208,34 @@ def run_inference(new_document_text, device, model=model, sentence_length=5):
     ########
     probabilities = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
     for label in probabilities.keys():
-        #probabilities[label] = dict(most_confident_labels[1])[label]
+        # probabilities[label] = dict(most_confident_labels[1])[label]
         probabilities[label] = most_confident_labels[1][label] / sum(most_confident_labels[1].values())
     ########
     most_confident_label = most_confident_labels[0]
-    print(f"labels:{most_confident_labels}")
-    print(f"Most confident label is {most_confident_label}")
+    # Most confidence для каждого класса
+    most_dominant_sequences = {}
+
+    beam_size = 10  # if there's less than 10 sequences => output all(<10) dominant sequences in this class
+    for label in most_confident_labels[1]:
+        # print(np.argmax(flat_predictions, axis=1).flatten() == label)
+        # print(np.argmax(flat_predictions, axis=1).flatten())
+
+        # choose only those probs (43 for label = 0) (among all the 72 probs) which correspond to sequences with label == label
+        fixed_label_probs = flat_predictions[np.where(predicted_labels == label)]
+        try:
+            dominant_indices = np.where(predicted_labels == label)[0][
+                np.argpartition(fixed_label_probs[:, label], -beam_size)[-beam_size:]]
+        except:
+            num_seq_by_class = most_confident_labels[1][label]
+            dominant_indices = np.where(predicted_labels == label)[0][
+                np.argpartition(fixed_label_probs[:, label], -num_seq_by_class)[-num_seq_by_class:]]
+        most_dominant_sequences[label] = dominant_indices
+
     # must be equal to number of sequences
     # print(len(final_logits))  # equals to number of batches
     # for i in range(len(final_logits)):
-    best_sequences = flat_predictions[np.argmax(flat_predictions, axis=1).flatten() == most_confident_label]
-    beam_size = 10
-    best_sentences_ids = np.argpartition(best_sequences[:, 2], -beam_size)[-beam_size:][::-1]
+    # best_sequences = flat_predictions[np.argmax(flat_predictions, axis=1).flatten() == most_confident_label]
+    # beam_size = 10
+    # best_sentences_ids = np.argpartition(best_sequences[:, most_confident_label], -beam_size)[-beam_size:][::-1]
 
-    return most_confident_label, most_confident_labels, best_sentences_ids, probabilities
+    return most_confident_label, most_confident_labels, most_dominant_sequences, probabilities
