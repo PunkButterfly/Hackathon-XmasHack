@@ -139,20 +139,10 @@ def choose(predictions, number_of_classes=5):
     return voices.most_common(number_of_classes)[0][0], voices
 
 
-def run_inference(new_document_text, device, sentence_length=5, quantile_param=0.75):
+def run_inference(new_document_text, device, model, sentence_length=5, quantile_param=0.75):
     # Initilize model
     tokenizer = AutoTokenizer.from_pretrained('DeepPavlov/rubert-base-cased')
 
-    with open("./config.yml", "r") as yamlfile:
-        cfg = yaml.safe_load(yamlfile)
-        print("Read successful")
-
-    model = BertForSequenceClassification(
-        pretrained_model_name='DeepPavlov/rubert-base-cased',
-        num_labels=cfg['model']['num_classes'],  # 5
-        dropout=cfg['model']['dropout'],  # 0.25
-    )
-    model.load_state_dict(torch.load("ml_model/DeepPavlov-Ru-bert-fine-tuned.pt", map_location=torch.device('cpu')))
 
     # Препроцесс
     splitted_text, splitting_points = splitting_text_by_regex(process_text(new_document_text))

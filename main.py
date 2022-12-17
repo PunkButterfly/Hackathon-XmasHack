@@ -16,7 +16,7 @@ reversed_mapping = {
 }
 st.set_page_config(layout="wide")
 
-download_model()
+model = download_model()
 
 # Initializing cache
 document_content = None
@@ -51,7 +51,7 @@ if analyze_button:
 
     st.session_state.document_content = document_content
 
-    output = run_inference(document_content, device='cpu')
+    output = run_inference(document_content, device='cpu', model=model)
     st.session_state.output = output
 
 st.write("___")
