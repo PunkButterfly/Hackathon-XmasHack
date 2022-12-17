@@ -1,7 +1,6 @@
 import re
-import streamlit as st
 from annotated_text import annotated_text
-from inference import splitting_text_by_regex, process_text, process_splitted_text
+from ml_model.inference import splitting_text_by_regex, process_text, process_splitted_text
 
 
 def process_input(text):
@@ -38,8 +37,6 @@ def view_document(document_text, ids, color="#630606"):
                 (with_points_splitted[index], "", color))  # "#1C6758" "#25316D" "#4C0033" "#4C3A51" "#630606"
         else:
             colored_factors.append(with_points_splitted[index])
-
-    st.subheader("Просмотр документа")
 
     for index in range(len(colored_factors)):
         annotated_text(colored_factors[index])

@@ -1,12 +1,11 @@
 import streamlit as st
-import numpy as np
-import re
-
-from inference import *
+from ml_model.inference import *
+from utils import get_confidence_sentences_ids
 from view_document import view_document
 from process_files import convert_file_to_text
 from annotated_text import annotated_text
 
+colors = ["#1C6758", "#25316D", "#4C0033", "#4C3A51", "#630606"]
 reversed_mapping = {
     0: "Договоры оказания услуг",
     1: "Договоры купли-продажи",
@@ -15,6 +14,11 @@ reversed_mapping = {
     4: "Договоры поставки"
 }
 st.set_page_config(layout="wide")
+# Initializing cache
+document_content = None
+output = None
+if 'output' not in st.session_state:
+    st.session_state.output = output
 
 st.title("Классификатор документов онлайн")
 
@@ -28,22 +32,13 @@ with inputing_text_column:
 with inputing_file_column:
     st.subheader(" ")
     st.subheader("Или загрузите документ DOC, DOCX, PDF, RTF")
-    document_file = st.file_uploader("Выберите файл", type=["doc", "docx", "pdf", "rtf"])
-
-document_content = None
-output = None
-
-if 'output' not in st.session_state:
-    st.session_state.output = output
+    document_file = st.file_uploader("", type=["doc", "docx", "pdf", "rtf"])
 
 analyze_button = st.button("Анализ", key="predict")
-
 if "analyze_button_state" not in st.session_state:
     st.session_state.analyze_button_state = False
 
 if analyze_button:
-
-    document_content = None
 
     if document_text:
         document_content = document_text
@@ -51,23 +46,19 @@ if analyze_button:
         document_content = convert_file_to_text(document_file)
     st.session_state.document_content = document_content
 
-    print(f"текст документы: {document_content}")
     output = run_inference(document_content, device='cpu')
     st.session_state.output = output
 
-    # st.write(f"Most confident label: {output[0]}")
-    # st.write(f"Type: {reversed_mapping[output[0]]}")
-    # st.write(f"Factors: {sorted(output[2])}")
-    #
-    # st.subheader("Количество голосов")
-    # for key, value in output[1][1].items():
-    #     st.write(f"{key}: {value}")
-
+st.write("___")
+st.write(" ")
 viewing_column, controlling_column = st.columns(2, gap="large")
 
 output = st.session_state.output
 with controlling_column:
-    colors = ["#1C6758", "#25316D", "#4C0033", "#4C3A51", "#630606"]
+    st.subheader("Настройки анализа")
+
+    confidence_filter = st.slider("Уровень доверия", min_value=0.1, max_value=0.9, step=0.1, value=0.8)
+    st.session_state.confidence_filter = confidence_filter
 
     st.write("")
     class_id = 0
@@ -115,16 +106,30 @@ with controlling_column:
     view_fifth_class = st.button("Выделить", key=f"view_fifth")
 
 with viewing_column:
+    confidence_filter = st.session_state.confidence_filter
+
+    st.subheader("Просмотр документа")
+
     if view_first_class:
-        view_document(st.session_state.document_content, output[2].get(0, np.array([])).tolist(), colors[0])
+        view_document(st.session_state.document_content,
+                      get_confidence_sentences_ids(*output[2], quantile_param=confidence_filter)
+                      .get(0, np.array([])).tolist(), colors[0])
     elif view_second_class:
-        view_document(st.session_state.document_content, output[2].get(1, np.array([])).tolist(), colors[1])
+        view_document(st.session_state.document_content,
+                      get_confidence_sentences_ids(*output[2], quantile_param=confidence_filter)
+                      .get(1, np.array([])).tolist(), colors[1])
     elif view_third_class:
-        view_document(st.session_state.document_content, output[2].get(2, np.array([])).tolist(), colors[2])
+        view_document(st.session_state.document_content,
+                      get_confidence_sentences_ids(*output[2], quantile_param=confidence_filter)
+                      .get(2, np.array([])).tolist(), colors[2])
     elif view_fourth_class:
-        view_document(st.session_state.document_content, output[2].get(3, np.array([])).tolist(), colors[3])
+        view_document(st.session_state.document_content,
+                      get_confidence_sentences_ids(*output[2], quantile_param=confidence_filter)
+                      .get(3, np.array([])).tolist(), colors[3])
     elif view_fifth_class:
-        view_document(st.session_state.document_content, output[2].get(4, np.array([])).tolist(), colors[4])
+        view_document(st.session_state.document_content,
+                      get_confidence_sentences_ids(*output[2], quantile_param=confidence_filter)
+                      .get(4, np.array([])).tolist(), colors[4])
 
 '''
 streamlit run main.py

@@ -7,7 +7,7 @@ import torch
 from torch.utils.data import DataLoader, Dataset, RandomSampler, SequentialSampler
 from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModel
-from model import BertForSequenceClassification
+from ml_model.model import BertForSequenceClassification
 
 torch.manual_seed(42)
 
@@ -141,7 +141,7 @@ def choose(predictions, number_of_classes=5):
 
 tokenizer = AutoTokenizer.from_pretrained('DeepPavlov/rubert-base-cased')
 
-with open("config.yml", "r") as yamlfile:
+with open("../config.yml", "r") as yamlfile:
     cfg = yaml.safe_load(yamlfile)
     print("Read successful")
 
@@ -159,7 +159,7 @@ def run_inference(new_document_text, device, model=model, sentence_length=5, qua
     processed_splitted_text = process_splitted_text(splitted_text)
 
     splitting_points = list(range(len(splitted_text)))
-    # Удаляем sequences длинны которых <= 5 (заголовки, которые одинаковые для многих документов)
+    # Удаляем sequences длины которых <= 5 (заголовки, которые одинаковые для многих документов)
     filtered_splitted_texts = []
     filtered_splitting_points = []
     # for text, splitter in zip(processed_splitted_text, splitting_points):
@@ -212,30 +212,18 @@ def run_inference(new_document_text, device, model=model, sentence_length=5, qua
         probabilities[label] = most_confident_labels[1][label] / sum(most_confident_labels[1].values())
     most_confident_label = most_confident_labels[0]
     # Most confidence для каждого класса
-    quantile_param = 0.75 # Параметр квантиля
+    getting_confidences_args = (flat_predictions, predicted_labels, most_confident_labels)
+    # Работает
+    # for label in most_confident_labels[1]:
+    # # choose only those probs (43 for label = 0) (among all the 72 probs) which correspond to sequences with label == label
+    # fixed_label_probs = flat_predictions[np.where(predicted_labels == label)]
+    # try:
+    #     dominant_indices = np.where(predicted_labels == label)[0][
+    #         np.argpartition(fixed_label_probs[:, label], -beam_size)[-beam_size:]]
+    # except:
+    #     num_seq_by_class = most_confident_labels[1][label]
+    #     dominant_indices = np.where(predicted_labels == label)[0][
+    #         np.argpartition(fixed_label_probs[:, label], -num_seq_by_class)[-num_seq_by_class:]]
+    # most_dominant_sequences[label] = dominant_indices
 
-    most_dominant_sequences = {}
-    beam_size = 10  # if there's less than 10 sequences => output all(<10) dominant sequences in this class
-    for label in most_confident_labels[1]:
-
-        fixed_label_probs = flat_predictions[np.where(predicted_labels == label)]
-        mean = np.quantile(fixed_label_probs[:, label], quantile_param)
-        dominant_ids = np.where(fixed_label_probs[:, label] > mean)
-        most_dominant_indices = np.where(predicted_labels == label)[0][dominant_ids]
-
-        most_dominant_sequences[label] = most_dominant_indices
-        print(most_dominant_indices)
-        # Работает
-        # # choose only those probs (43 for label = 0) (among all the 72 probs) which correspond to sequences with label == label
-        # fixed_label_probs = flat_predictions[np.where(predicted_labels == label)]
-        # try:
-        #     dominant_indices = np.where(predicted_labels == label)[0][
-        #         np.argpartition(fixed_label_probs[:, label], -beam_size)[-beam_size:]]
-        # except:
-        #     num_seq_by_class = most_confident_labels[1][label]
-        #     dominant_indices = np.where(predicted_labels == label)[0][
-        #         np.argpartition(fixed_label_probs[:, label], -num_seq_by_class)[-num_seq_by_class:]]
-        # most_dominant_sequences[label] = dominant_indices
-
-
-    return most_confident_label, most_confident_labels, most_dominant_sequences, probabilities
+    return most_confident_label, most_confident_labels, getting_confidences_args, probabilities
