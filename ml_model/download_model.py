@@ -3,6 +3,7 @@ import gdown
 import yaml
 import torch
 from ml_model.model import BertForSequenceClassification
+from transformers import AutoTokenizer
 import streamlit as st
 
 
@@ -18,6 +19,8 @@ def download_model():
     with open("./config.yml", "r") as yamlfile:
         cfg = yaml.safe_load(yamlfile)
         print("Read successful")
+
+    tokenizer = AutoTokenizer.from_pretrained('DeepPavlov/rubert-base-cased')
 
     model = BertForSequenceClassification(
         pretrained_model_name='DeepPavlov/rubert-base-cased',

@@ -1,6 +1,6 @@
 import streamlit as st
 from ml_model.inference import *
-from utils import get_confidence_sentences_ids
+from features import get_confidence_sentences_ids, get_entities
 from view_document import view_document
 from process_files import convert_file_to_text
 from annotated_text import annotated_text
@@ -109,6 +109,9 @@ with controlling_column:
             "", colors[class_id])
     )
     view_fifth_class = st.button("Выделить", key=f"view_fifth")
+
+    entities = get_entities(document_text)
+    st.write(entities)
 
 with viewing_column:
     confidence_filter = st.session_state.confidence_filter

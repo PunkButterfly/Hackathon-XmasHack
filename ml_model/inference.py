@@ -140,9 +140,9 @@ def choose(predictions, number_of_classes=5):
 
 
 def run_inference(new_document_text, device, model, sentence_length=5, quantile_param=0.75):
-    # Initilize model
-    tokenizer = AutoTokenizer.from_pretrained('DeepPavlov/rubert-base-cased')
-
+    # Читаем кфг
+    with open("./config.yml", "r") as yamlfile:
+        cfg = yaml.safe_load(yamlfile)
 
     # Препроцесс
     splitted_text, splitting_points = splitting_text_by_regex(process_text(new_document_text))
