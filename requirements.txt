@@ -7,7 +7,7 @@ scikit-learn==1.1.2
 torch==1.13.1
 tqdm==4.64.1
 docx==0.2.4
-# dill нужно скачать
 pypdf2==2.12.1
 requests==2.28.1
 gdown==4.6.0
+inotify==0.2.10
