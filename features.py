@@ -1,6 +1,6 @@
 import pymorphy2
 import numpy as np
-from spacy.tokens import Doc
+from natasha import NewsNERTagger, NewsEmbedding, Doc
 
 
 def get_confidence_sentences_ids(flat_predictions, predicted_labels, most_confident_labels, quantile_param=0.75):
@@ -28,6 +28,8 @@ def get_entities(text):
       }
     ```
     """
+    emb = NewsEmbedding()
+    ner_tagger = NewsNERTagger(emb)
 
     doc = Doc(text)
     try:

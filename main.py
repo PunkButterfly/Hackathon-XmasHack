@@ -141,12 +141,37 @@ try:
 
         st.write("___")
         st.write("")
-        # entities = get_entities(st.session_state.document_content)
-        st.subheader("Важные сущности")
-        st.write("Локации (Открыть на карте?)")
-        loc = "Привет"
-        st.write(f"[loc](https://www.google.com/search?q={loc})")
-        st.write("Организации (Погуглить про нее?)")
+        entities = get_entities(st.session_state.document_content)
+        entities_loc = []
+        entities_org = []
+        entities_per = []
+        for i in entities.keys():
+            if entities[i]['type'] == 'LOC':
+                entities_loc.append(i)
+            if entities[i]['type'] == 'ORG':
+                entities_org.append(i)
+            if entities[i]['type'] == 'PER':
+                entities_per.append(i)
+        print(f'LOC: {entities_loc}')
+        print(f'ORG: {entities_org}')
+        print(f'PER: {entities_per}')
+
+        if len(entities.keys()) > 0:
+            st.subheader("Важные сущности")
+        if len(entities_org) > 0:
+            st.write("Организации (Погуглить про них?):")
+            for organization in entities_org:
+                st.write(f"[{organization}](https://www.google.com/search?q={organization.replace(' ', '+')})")
+
+        if len(entities_loc) > 0:
+            st.write("Локации (Открыть на карте?):")
+            for location in entities_loc:
+                st.write(f"[{location}](https://www.google.com/maps/search/{location.replace(' ', '+')})")
+
+        if len(entities_per) > 0:
+            st.write("Персоны (Погуглить про них?):")
+            for person in entities_per:
+                st.write(f"[{person}](https://www.google.com/search?q={person.replace(' ', '+')})")
 
     with viewing_column:
         confidence_filter = st.session_state.confidence_filter
