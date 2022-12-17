@@ -161,17 +161,20 @@ try:
         if len(entities_org) > 0:
             st.write("Организации (Погуглить про них?):")
             for organization in entities_org:
-                st.write(f"[{organization}](https://www.google.com/search?q={organization.replace(' ', '+')})")
+                req = re.sub(r'\s+', '+', organization)
+                st.write(f"[{organization}](https://www.google.com/search?q={req})")
 
         if len(entities_loc) > 0:
             st.write("Локации (Открыть на карте?):")
             for location in entities_loc:
-                st.write(f"[{location}](https://www.google.com/maps/search/{location.replace(' ', '+')})")
+                req = re.sub(r'\s+', '+', location)
+                st.write(f"[{location}](https://www.google.com/maps/search/{req})")
 
         if len(entities_per) > 0:
             st.write("Персоны (Погуглить про них?):")
             for person in entities_per:
-                st.write(f"[{person}](https://www.google.com/search?q={person.replace(' ', '+')})")
+                req = re.sub(r'\s+', '+', person)
+                st.write(f"[{person}](https://www.google.com/search?q={req})")
 
     with viewing_column:
         confidence_filter = st.session_state.confidence_filter
